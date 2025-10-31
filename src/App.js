@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Chat from './components/Chat';
 import './styles/App.css';
 
 function App() {
+  const userID = crypto.randomUUID();
   return (
     <div className="App">
-      <Chat></Chat>
+      <Chat userID={userID}></Chat>
     </div>
   );
 }

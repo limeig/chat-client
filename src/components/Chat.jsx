@@ -3,39 +3,55 @@ import "../styles/Chat.css";
 import { MdSend } from "react-icons/md";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import ChatMessage from "./ChatMessage";
 
-const Chat = () => {
+const Chat = ({userID}) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
 
   useEffect(() => {
+    let active = true;
+
+    async function subscribe() {
+      while (active) {
+        try {
+          console.log("Polling for new messages...");
+          const { data } = await axios.get(
+            "http://localhost:5000/poll-messages"
+          );
+          
+          console.log("Poll response data: ", data);
+          if (!data.message) {
+            continue;
+          }
+          setMessages((messages) => [...messages, data.message]);
+          console.log("Get message: ", data.message);
+        } catch (error) {
+          console.error("Error fetching messages:", error);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
     subscribe();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const subscribe = async () => {
-    console.log("Subscribing to messages...");
-    try {
-      const { data } = await axios.get("http://localhost:5000/get-messages");
-      setMessages((messages) => [...messages, data.message]);
-      console.log(data.message);
-      await subscribe();
-    } catch (error) {
-      console.error("Error fetching messages:", error);
-      setTimeout(() => {
-        subscribe();
-      }, 1000);
-    }
-  };
-
   const sendMessage = async () => {
+    console.log("Sending message:", input);
     setInput("");
     return axios
       .post("http://localhost:5000/send-message", {
         id: Date.now(),
-        message: input,
-      })
+        message: {
+          text: input,
+        }
+      }, {headers: { Authorization: userID }})
       .then((response) => {
-        console.log("Message sent:", response.data);
+        console.log("Message sent");
       })
       .catch((error) => {
         console.error("Error sending message:", error);
@@ -44,24 +60,25 @@ const Chat = () => {
 
   return (
     <div className="chat">
-      <div className="message__box">
-        {messages.map((message, index) => (
-          <div key={index} className="message">
-            {message}
-          </div>
-        ))}
+      <div className="message_box">
+        {
+          messages.map((message, index) => {
+            console.log("Rendering message: ", message)
+            return (      
+            <ChatMessage key={index} message={message.text} sender={message.sender} thisUser={userID}/>
+        )})
+        }
       </div>
-      <form className="input__box" onSubmit={sendMessage}>
-        {" "}
+      <div className="input_box">
         <input
-          className="message__input"
+          className="message_input"
           value={input}
           onChange={(e) => setInput(e.target.value)}
         ></input>
-        <button className="message__button" onClick={sendMessage}>
+        <button className="send_button" onClick={sendMessage}>
           <MdSend size={35} />
         </button>
-      </form>
+      </div>
     </div>
   );
 };

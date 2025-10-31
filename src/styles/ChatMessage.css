@@ -1,0 +1,37 @@
+.message {
+    display: flex;
+    flex-direction: column;
+}
+
+.message.left {
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.right {
+  justify-content: flex-end;
+  align-items: flex-end;
+}
+
+.text {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.5rem 1rem;
+    border-radius: 15px;
+    max-width: 50%;
+    word-wrap: break-word;
+}
+
+.sender {
+    color: #4399FF
+}
+.message.left .text {
+    background-color: #DCE8FF;
+    align-self: flex-start;
+
+}
+
+.message.right .text {
+    background-color: #4399FF;
+    color: white;
+}

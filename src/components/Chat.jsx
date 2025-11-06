@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import "../styles/Chat.css";
 import { MdSend } from "react-icons/md";
 import { useState, useEffect } from "react";
@@ -8,8 +8,19 @@ import ChatMessage from "./ChatMessage";
 const Chat = ({userID}) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const messagesRef = useRef(null);
 
   useEffect(() => {
+
+    axios.get("http://localhost:5000/messages")
+      .then((response) => { 
+        console.log("Initial messages fetched: ", response.data);
+        setMessages(response.data.messages);
+      })
+      .catch((error) => {
+        console.error("Error fetching initial messages:", error);
+      });
+    
     let active = true;
 
     async function subscribe() {
@@ -17,7 +28,7 @@ const Chat = ({userID}) => {
         try {
           console.log("Polling for new messages...");
           const { data } = await axios.get(
-            "http://localhost:5000/poll-messages"
+            "http://localhost:5000/messages/poll"
           );
           
           console.log("Poll response data: ", data);
@@ -40,11 +51,20 @@ const Chat = ({userID}) => {
     };
   }, []);
 
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    console.log("Scrolling to bottom");
+    const messageBox = messagesRef.current;
+    if (messageBox) {
+      messageBox.scrollTop = messageBox.scrollHeight;
+    }
+  }, [messages]);
+
   const sendMessage = async () => {
     console.log("Sending message:", input);
     setInput("");
     return axios
-      .post("http://localhost:5000/send-message", {
+      .post("http://localhost:5000/message", {
         id: Date.now(),
         message: {
           text: input,
@@ -60,7 +80,7 @@ const Chat = ({userID}) => {
 
   return (
     <div className="chat">
-      <div className="message_box">
+      <div className="message_box" ref={messagesRef}>
         {
           messages.map((message, index) => {
             console.log("Rendering message: ", message)

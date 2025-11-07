@@ -12,7 +12,7 @@ const Chat = ({userID}) => {
 
   useEffect(() => {
 
-    axios.get("http://localhost:5000/messages")
+    axios.get("http://localhost:5000/messages", {headers: { Authorization: userID }})
       .then((response) => { 
         console.log("Initial messages fetched: ", response.data);
         setMessages(response.data.messages);
@@ -28,7 +28,7 @@ const Chat = ({userID}) => {
         try {
           console.log("Polling for new messages...");
           const { data } = await axios.get(
-            "http://localhost:5000/messages/poll"
+            "http://localhost:5000/messages/poll", {headers: { Authorization: userID }}
           );
           
           console.log("Poll response data: ", data);
@@ -64,7 +64,7 @@ const Chat = ({userID}) => {
     console.log("Sending message:", input);
     setInput("");
     return axios
-      .post("http://localhost:5000/message", {
+      .post("http://localhost:5000/messages", {
         id: Date.now(),
         message: {
           text: input,

@@ -2,17 +2,26 @@ import React, { useRef } from "react";
 import "../styles/Chat.css";
 import { MdSend } from "react-icons/md";
 import { useState, useEffect } from "react";
+import { useContext } from 'react'
+import { UserContext } from '../context/UserContext';
 import axios from "axios";
 import ChatMessage from "./ChatMessage";
 
-const Chat = ({userID}) => {
+const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const messagesRef = useRef(null);
 
+  const user = useContext(UserContext);
+  console.log('Current user ', user.current);
+  
   useEffect(() => {
+    const controller = new AbortController();
 
-    axios.get("http://localhost:5000/messages", {headers: { Authorization: userID }})
+    axios.get("http://localhost:5000/messages", {
+      headers: { Authorization: user.id },
+      signal: controller.signal,
+      })
       .then((response) => { 
         console.log("Initial messages fetched: ", response.data);
         setMessages(response.data.messages);
@@ -21,20 +30,23 @@ const Chat = ({userID}) => {
         console.error("Error fetching initial messages:", error);
       });
     
-    let active = true;
 
-    async function subscribe() {
+      let active = true;
+      async function subscribe() {
       while (active) {
         try {
           console.log("Polling for new messages...");
           const { data } = await axios.get(
-            "http://localhost:5000/messages/poll", {headers: { Authorization: userID }}
-          );
+            "http://localhost:5000/messages/poll",
+            {
+              headers: { Authorization: user.id },
+              signal: controller.signal,
+          });
           
-          console.log("Poll response data: ", data);
           if (!data.message) {
             continue;
           }
+          
           setMessages((messages) => [...messages, data.message]);
           console.log("Get message: ", data.message);
         } catch (error) {
@@ -47,7 +59,9 @@ const Chat = ({userID}) => {
     subscribe();
 
     return () => {
+      console.log("Unmounting chat component");
       active = false;
+      controller.abort();
     };
   }, []);
 
@@ -68,8 +82,9 @@ const Chat = ({userID}) => {
         id: Date.now(),
         message: {
           text: input,
+          sender: user.current
         }
-      }, {headers: { Authorization: userID }})
+      }, {headers: { Authorization: user.id }})
       .then((response) => {
         console.log("Message sent");
       })
@@ -85,7 +100,7 @@ const Chat = ({userID}) => {
           messages.map((message, index) => {
             console.log("Rendering message: ", message)
             return (      
-            <ChatMessage key={index} message={message.text} sender={message.sender} thisUser={userID}/>
+            <ChatMessage key={index} message={message.text} sender={message.sender}/>
         )})
         }
       </div>

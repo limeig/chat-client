@@ -1,13 +1,19 @@
-import { useRef } from 'react';
-import Chat from './components/Chat';
+import { Routes, Route } from 'react-router'
+import { UserProvider } from './context/UserContext'
 import './styles/App.css';
+import IntroPage from './pages/IntroPage';
+import ChatPage from './pages/ChatPage'
 
 function App() {
-  const userID = useRef(crypto.randomUUID());
   return (
+    <UserProvider>
     <div className="App">
-      <Chat userID={userID.current}></Chat>
+      <Routes>
+        <Route index element={<IntroPage/>} />
+        <Route path="/chat" element={<ChatPage/>} />
+      </Routes>
     </div>
+    </UserProvider>
   );
 }
 
